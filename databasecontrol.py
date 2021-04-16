@@ -81,6 +81,33 @@ def dumpNewFollows():
     emptyNewFollows()
     return newFollows
 
+def GetRecentFollows(_timePeriod):
+    _timePeriod = _timePeriod*3600
+    connection = openConnection()
+    newFollows = {}
+    currentInfluencers = getCurrentInfluencers()
+    for i in range(len(currentInfluencers)):
+        currentInfluencers[i] = checkName(currentInfluencers[i])
+        changeloglist = connection.execute("SELECT * FROM "+currentInfluencers[i]+" WHERE time>"+str(calendar.timegm(time.gmtime())-_timePeriod)).fetchall()
+        if changeloglist:
+            currentInfluencers[i] = returnNameToNormal(currentInfluencers[i])
+            newFollows.update({currentInfluencers[i]: changeloglist})
+    return newFollows
+
+def GetInfluencerFollowsByHandle(_handle):
+    connection = openConnection()
+    followsByInfluencer = {}
+    currentInfluencers = getCurrentInfluencers()
+    for i in range(len(currentInfluencers)):
+        currentInfluencers[i] = checkName(currentInfluencers[i])
+        timeStampOfFollow = connection.execute("SELECT time FROM "+currentInfluencers[i]+" WHERE follows LIKE '"+_handle+"' ORDER BY time").fetchall()
+        if timeStampOfFollow:
+            currentInfluencers[i] = returnNameToNormal(currentInfluencers[i])
+            followsByInfluencer.update({currentInfluencers[i]: timeStampOfFollow})
+    followsByInfluencer = {key: val for key, val in sorted(followsByInfluencer.items(), key = lambda ele: ele[1])}
+    return followsByInfluencer
+
+
 def trendingWithinTimePeriod(_hours):
     seconds = _hours * 3600
     connection = openConnection()
